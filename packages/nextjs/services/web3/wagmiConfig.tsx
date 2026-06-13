@@ -3,6 +3,7 @@
 // the embedded/smart wallets stay in sync. We intentionally do NOT pass
 // `connectors` here — Privy injects them.
 // Confirmed at: https://docs.privy.io/wallets/connectors/ethereum/integrations/wagmi
+import { withMainnet } from "./enabledChains";
 import { createConfig } from "@privy-io/wagmi";
 import { Chain, createClient, fallback, http } from "viem";
 import { hardhat, mainnet } from "viem/chains";
@@ -12,9 +13,7 @@ import { getAlchemyHttpUrl } from "~~/utils/scaffold-eth";
 const { targetNetworks } = scaffoldConfig;
 
 // We always want to have mainnet enabled (ENS resolution, ETH price, etc). But only once.
-export const enabledChains = targetNetworks.find((network: Chain) => network.id === 1)
-  ? targetNetworks
-  : ([...targetNetworks, mainnet] as const);
+export const enabledChains = withMainnet(targetNetworks);
 
 export const wagmiConfig = createConfig({
   chains: enabledChains,

@@ -13,7 +13,6 @@ import { Toaster } from "react-hot-toast";
 import { WagmiProvider } from "wagmi";
 import { Footer } from "~~/components/Footer";
 import { Header } from "~~/components/Header";
-import { PrivySmartAccountConnector } from "~~/services/web3/PrivySmartAccountConnector";
 import { privyConfig } from "~~/services/web3/privyConfig";
 import { wagmiConfig } from "~~/services/web3/wagmiConfig";
 
@@ -41,7 +40,7 @@ export const queryClient = new QueryClient({
 // A real Privy App ID is REQUIRED at runtime — get it from the Privy Dashboard and
 // set NEXT_PUBLIC_PRIVY_APP_ID. CI / prerender has no key; to keep SSG/prerender
 // from throwing we only mount the Privy-dependent stack (PrivyProvider →
-// SmartWalletsProvider → PrivySmartAccountConnector, which call Privy hooks) on
+// SmartWalletsProvider, which call Privy hooks) on
 // the client AND only when an appId is present. Server render / empty-key builds
 // fall back to the plain wagmi + react-query stack so the build stays green.
 const PRIVY_APP_ID = process.env.NEXT_PUBLIC_PRIVY_APP_ID ?? "";
@@ -73,9 +72,9 @@ export const ScaffoldEthAppWithProviders = ({ children }: { children: React.Reac
   }
 
   // Client-side with a real App ID: full Privy stack. `@privy-io/wagmi`'s
-  // `WagmiProvider` wires wagmi to Privy's embedded/smart wallets, and
-  // `PrivySmartAccountConnector` registers the smart account so write hooks send
-  // sponsored UserOps.
+  // `WagmiProvider` keeps wagmi in sync with Privy's embedded wallet (used for
+  // READS / chain state). WRITES are sent as sponsored UserOps through the native
+  // smart wallet via `useSmartWallets().client` (see hooks/scaffold-eth/useSmartWallet).
   return (
     <PrivyProvider
       appId={PRIVY_APP_ID}
@@ -90,7 +89,6 @@ export const ScaffoldEthAppWithProviders = ({ children }: { children: React.Reac
       <SmartWalletsProvider>
         <QueryClientProvider client={queryClient}>
           <PrivyWagmiProvider config={wagmiConfig}>
-            <PrivySmartAccountConnector />
             <ProgressBar height="3px" color="#2299dd" />
             <ScaffoldEthApp>{children}</ScaffoldEthApp>
           </PrivyWagmiProvider>

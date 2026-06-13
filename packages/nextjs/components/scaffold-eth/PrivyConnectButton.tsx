@@ -19,6 +19,7 @@ import {
 import { BlockieAvatar } from "~~/components/scaffold-eth";
 import { NetworkOptions } from "~~/components/scaffold-eth/NetworkOptions";
 import { useCopyToClipboard, useNetworkColor, useOutsideClick } from "~~/hooks/scaffold-eth";
+import { useSmartWalletAddress } from "~~/hooks/scaffold-eth/useSmartWallet";
 import { useTargetNetwork } from "~~/hooks/scaffold-eth/useTargetNetwork";
 import { getTargetNetworks } from "~~/utils/scaffold-eth";
 
@@ -142,16 +143,25 @@ export const PrivyConnectButton = () => {
 
 /**
  * Inner component: uses Privy's `usePrivy` ({ ready, authenticated, login, logout })
- * for auth, and wagmi's `useAccount` for the active (smart) account + chain. ENS
- * name and avatar are resolved against Ethereum Mainnet (chainId 1) even when the
- * app's active chain is an L2, and fall back to a truncated address.
+ * for auth. The displayed identity is the native **smart wallet** address
+ * (`useSmartWalletAddress()`), falling back to the embedded EOA (`useAccount().address`)
+ * only while the smart wallet is still being created. Blockie / ENS / Balance /
+ * explorer link are all keyed to that address. ENS name and avatar are resolved
+ * against Ethereum Mainnet (chainId 1) even when the app's active chain is an L2,
+ * and fall back to a truncated address.
  *
  * Confirmed in Privy docs:
  * - usePrivy: https://docs.privy.io/wallets/connectors/ethereum/integrations/wagmi
+ * - smart wallet address from `user.linkedAccounts` (type 'smart_wallet'):
+ *   https://docs.privy.io/wallets/using-wallets/evm-smart-wallets/overview
  */
 const PrivyConnectButtonInner = () => {
   const { ready, authenticated, login, logout } = usePrivy();
-  const { address, chain } = useAccount();
+  const { address: eoaAddress, chain } = useAccount();
+  const smartWalletAddress = useSmartWalletAddress();
+  // Prefer the smart wallet as the primary identity; fall back to the embedded
+  // EOA only while the smart wallet hasn't been created yet.
+  const address = smartWalletAddress ?? eoaAddress;
   const { targetNetwork } = useTargetNetwork();
   const networkColor = useNetworkColor();
 
@@ -180,7 +190,14 @@ const PrivyConnectButtonInner = () => {
     );
   }
 
-  if (chain && chain.id !== targetNetwork.id) {
+  // While wagmi hasn't reported the active chain yet, treat the app as "not
+  // ready" rather than skipping the wrong-network guard below (a `chain &&`
+  // guard would render the connected UI on an unknown network).
+  if (!chain) {
+    return <div className="btn btn-primary btn-sm pointer-events-none animate-pulse">…</div>;
+  }
+
+  if (chain.id !== targetNetwork.id) {
     // Mirror RainbowKit's wrong-network UX with a Privy-aware logout.
     return (
       <div className="dropdown dropdown-end mr-2">

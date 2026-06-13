@@ -1,6 +1,6 @@
+import { withMainnet } from "./enabledChains";
 import type { PrivyClientConfig } from "@privy-io/react-auth";
 import { Chain } from "viem";
-import { mainnet } from "viem/chains";
 import scaffoldConfig from "~~/scaffold.config";
 
 /**
@@ -20,10 +20,8 @@ const { targetNetworks } = scaffoldConfig;
 
 // Privy requires a non-empty supportedChains array, and the defaultChain must be
 // included in it. We always add mainnet so ENS resolution keeps working even when
-// the app's active chain is an L2 (mirrors the wagmi `enabledChains` logic).
-const supportedChains = (
-  targetNetworks.find((network: Chain) => network.id === mainnet.id) ? targetNetworks : [...targetNetworks, mainnet]
-) as [Chain, ...Chain[]];
+// the app's active chain is an L2 (shares `withMainnet` with the wagmi config).
+const supportedChains = withMainnet(targetNetworks);
 
 // The primary network the app operates on (first configured target network).
 const defaultChain = targetNetworks[0] as Chain;

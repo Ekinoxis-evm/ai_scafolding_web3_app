@@ -15,7 +15,7 @@ configured in the Privy Dashboard, not in code.
 
 ### Packages
 - `@privy-io/react-auth` (^3.29) — `PrivyProvider`, `usePrivy`, and `@privy-io/react-auth/smart-wallets` (`SmartWalletsProvider`, `useSmartWallets`).
-- `@privy-io/wagmi` (^4.0) — drop-in `createConfig` + `WagmiProvider`, and `useEmbeddedSmartAccountConnector`.
+- `@privy-io/wagmi` (^4.0) — drop-in `createConfig` + `WagmiProvider` (used for reads / chain state only).
 - `permissionless` (0.2.57) — peer dependency of Privy's native smart wallets.
 - `viem` pinned to `2.52.0` (required exactly by `@privy-io/wagmi@4`).
 
@@ -26,16 +26,21 @@ Client-side, with a real `NEXT_PUBLIC_PRIVY_APP_ID`:
 PrivyProvider (config = privyConfig + runtime theme)
   └─ SmartWalletsProvider              // native ERC-4337 smart wallets
        └─ QueryClientProvider
-            └─ WagmiProvider           // from @privy-io/wagmi (drop-in)
-                 ├─ PrivySmartAccountConnector   // registers smart account w/ wagmi
+            └─ WagmiProvider           // from @privy-io/wagmi (reads / chain state only)
                  ├─ ProgressBar
                  └─ ScaffoldEthApp
 ```
 
+We do **not** bridge the smart account through wagmi (`useEmbeddedSmartAccountConnector`
+was removed). That wagmi bridge needs an *external* ZeroDev/Pimlico paymaster and does
+not use the dashboard's managed gas credits. Instead, writes are sent directly through
+the native smart-wallet client (`useSmartWallets().client`), whose UserOps route through
+Privy's **managed paymaster = your dashboard "App pays" gas credits**.
+
 Confirmed against:
 - `wallets/connectors/ethereum/integrations/wagmi` — `createConfig`/`WagmiProvider` from `@privy-io/wagmi`, provider order.
 - `wallets/using-wallets/evm-smart-wallets/overview` and `.../setup/configuring-sdk` — `SmartWalletsProvider` nested inside `PrivyProvider`; peer deps `permissionless`, `viem`.
-- `recipes/account-abstraction/wagmi` — `useEmbeddedSmartAccountConnector({ getSmartAccountFromSigner })` so wagmi reflects the smart account → SE-2 write hooks send sponsored UserOps.
+- `wallets/using-wallets/evm-smart-wallets/usage` — `useSmartWallets().client.sendTransaction(...)` (single + batched, sponsored).
 - `basics/react/advanced/configuring-evm-networks` — `defaultChain` / `supportedChains`.
 
 ### Privy config (`services/web3/privyConfig.ts`)
@@ -49,13 +54,48 @@ appearance:     { theme, accentColor: '#2299dd' } // theme overridden at runtime
 > In `@privy-io/react-auth` v3, `createOnLogin` lives under `embeddedWallets.ethereum`, not at the top level.
 
 ### wagmi config (`services/web3/wagmiConfig.tsx`)
-- `createConfig` now imported from `@privy-io/wagmi` (drop-in).
-- `connectors: wagmiConnectors()` **removed** — Privy injects connectors.
-- `enabledChains` and the `client`/transport/fallback logic are unchanged.
+- `createConfig` imported from `@privy-io/wagmi` (drop-in), **no connectors** — Privy injects them.
+- wagmi still tracks the embedded wallet (used for READS / chain state); the smart
+  account is **not** bridged through wagmi.
+- `enabledChains` and `privyConfig.supportedChains` share one helper,
+  `withMainnet()` (`services/web3/enabledChains.ts`), so mainnet (for ENS) is always
+  present exactly once and the two configs never drift.
+
+### Native smart-wallet write path (`hooks/scaffold-eth/useSmartWallet.ts`)
+Sponsored writes go through the native smart-wallet client, **not** SE-2's
+`useScaffoldWriteContract`:
+
+```ts
+const { client } = useSmartWallets();                  // @privy-io/react-auth/smart-wallets
+
+// single sponsored tx (encode the call with viem's encodeFunctionData):
+await client.sendTransaction({ chain, to, data, value? });   // → tx hash (Hex)
+
+// atomic batch (e.g. approve + deposit in one UserOp):
+await client.sendTransaction({ calls: [{ to, data, value? }, ...] });
+```
+
+This repo wraps that in `useSponsoredWrite()`:
+- `writeContractSponsored({ address, abi, functionName, args, value? })` — encodes via
+  `encodeFunctionData` and sends one sponsored tx on the SE-2 `useTargetNetwork()` chain.
+- `sendCalls(calls)` — atomic sponsored batch.
+- `{ isPending, error, lastTxHash }` for UI state; throws a clear error if `client` isn't
+  ready (not logged in / smart wallets not enabled in the dashboard).
+
+**Reads** keep using SE-2's `useScaffoldReadContract`, but pass
+`{ account: useSmartWalletAddress() }` so balances/allowances reflect the **smart
+wallet**, not the embedded EOA signer. The smart wallet address comes from
+`usePrivy().user.linkedAccounts` where `type === 'smart_wallet'`
+(`useSmartWalletAddress()`), `undefined` until it is created.
 
 ### Connect button (`components/scaffold-eth/PrivyConnectButton.tsx`)
-- `usePrivy()` → `{ ready, authenticated, login, logout }`; wagmi `useAccount` / `useSwitchChain` (via `NetworkOptions`).
+- `usePrivy()` → `{ ready, authenticated, login, logout }`; wagmi `useAccount` (chain) / `useSwitchChain` (via `NetworkOptions`).
+- Primary identity is the **smart wallet** address (`useSmartWalletAddress()`), falling
+  back to the embedded EOA only while the smart wallet is still being created. Blockie /
+  ENS / Balance / explorer link are all keyed to that address.
 - Shows ENS name + avatar (resolved on **Mainnet**, chainId 1) with truncated-address fallback, a Blockie, balance, network name, wrong-network switch, copy, explorer link, and Privy `logout`.
+- When wagmi hasn't reported the active `chain` yet, it shows the pulsing placeholder
+  instead of skipping the wrong-network guard.
 - Swapped into `components/Header.tsx`. RainbowKit and burner-connector were **fully removed** (deps + files); `NetworkOptions` was salvaged to `components/scaffold-eth/`.
 
 ### Build-safety with an empty App ID
@@ -119,7 +159,7 @@ dashboard paymaster configuration.
 ## Runtime notes
 - Always gate on `usePrivy().ready` before reading auth state (Privy inits async).
 - Embedded wallets are non-custodial; keys are split/secured by Privy.
-- The smart wallet address is in `user.linkedAccounts` as `type === 'smart_wallet'`;
-  the native client (`useSmartWallets().client`) also supports batched + sponsored
-  `sendTransaction` directly.
+- The smart wallet address is in `user.linkedAccounts` as `type === 'smart_wallet'`
+  (`useSmartWalletAddress()`); the native client (`useSmartWallets().client`) supports
+  batched + sponsored `sendTransaction` directly (`useSponsoredWrite()`).
 - For server auth, verify the Privy access token (JWT) in API routes / middleware.
