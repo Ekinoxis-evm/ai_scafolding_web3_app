@@ -56,7 +56,7 @@ appearance:     { theme, accentColor: '#2299dd' } // theme overridden at runtime
 ### Connect button (`components/scaffold-eth/PrivyConnectButton.tsx`)
 - `usePrivy()` → `{ ready, authenticated, login, logout }`; wagmi `useAccount` / `useSwitchChain` (via `NetworkOptions`).
 - Shows ENS name + avatar (resolved on **Mainnet**, chainId 1) with truncated-address fallback, a Blockie, balance, network name, wrong-network switch, copy, explorer link, and Privy `logout`.
-- Swapped into `components/Header.tsx`. The old RainbowKit button files are left in place but unused.
+- Swapped into `components/Header.tsx`. RainbowKit and burner-connector were **fully removed** (deps + files); `NetworkOptions` was salvaged to `components/scaffold-eth/`.
 
 ### Build-safety with an empty App ID
 CI / prerender has no key. `ScaffoldEthAppWithProviders` renders a **plain wagmi**

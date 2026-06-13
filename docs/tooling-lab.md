@@ -61,5 +61,6 @@ The full set of tooling wired into this workspace. **Base framework: Scaffold-ET
 - [ ] App keys → `NEXT_PUBLIC_ALCHEMY_API_KEY`, `NEXT_PUBLIC_PRIVY_APP_ID` (+ `PRIVY_APP_SECRET`), `ETHERSCAN_API_KEY`
 
 ## Done / next
-- ✅ **Privy is the default wallet/auth** with sponsored ERC-4337 smart wallets (RainbowKit removed). Runtime needs `NEXT_PUBLIC_PRIVY_APP_ID` + a dashboard paymaster — see `docs/privy.md`.
-- Optional adds when needed: Tenderly, an Alchemy MCP. Cleanup: remove dormant RainbowKit deps/files once confirmed unused.
+- ✅ **Privy is the default wallet/auth** with sponsored ERC-4337 smart wallets. RainbowKit + burner-connector fully removed. Runtime needs `NEXT_PUBLIC_PRIVY_APP_ID` + dashboard smart-wallets/gas-credits/allowed-origins — see `docs/privy.md`.
+- ✅ **Working chain: Ethereum Sepolia** (`packages/nextjs/scaffold.config.ts`). Foundry deploy/verify + RPC aligned.
+- Optional adds when needed: Tenderly, an Alchemy MCP, a custom subgraph for your contract's events.

@@ -2,6 +2,8 @@
 
 Every onchain read/write needs an RPC endpoint. Don't ship public/free RPCs in production — they rate-limit and drop.
 
+**Working chain: Ethereum Sepolia** (`eth-sepolia`, chainId 11155111). Mainnet is used only for ENS resolution.
+
 ## Recommended: Alchemy (one key, every chain)
 Get a key at [dashboard.alchemy.com](https://dashboard.alchemy.com). URL pattern:
 
@@ -11,7 +13,8 @@ https://<chain>.g.alchemy.com/v2/<ALCHEMY_API_KEY>
 
 | Chain | subdomain |
 |-------|-----------|
-| Ethereum Mainnet | `eth-mainnet` |
+| **Ethereum Sepolia** (working chain) | `eth-sepolia` |
+| Ethereum Mainnet (ENS) | `eth-mainnet` |
 | Base | `base-mainnet` |
 | Base Sepolia | `base-sepolia` |
 | Optimism | `opt-mainnet` |

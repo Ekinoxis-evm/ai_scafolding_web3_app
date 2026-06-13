@@ -11,7 +11,7 @@ Scaffold-ETH 2 (SE-2) is a starter kit for building dApps on Ethereum. It comes 
 
 Both flavors share the same frontend package:
 
-- **packages/nextjs**: React frontend (Next.js App Router, not Pages Router, RainbowKit, Wagmi, Viem, TypeScript, Tailwind CSS with DaisyUI)
+- **packages/nextjs**: React frontend (Next.js App Router, not Pages Router, **Privy** auth + smart wallets via `@privy-io/wagmi`, Wagmi, Viem, TypeScript, Tailwind CSS with DaisyUI). RainbowKit was removed — Privy is the wallet/auth.
 
 ### Detecting Which Flavor You're Using
 
@@ -229,7 +229,7 @@ Make comments that add information. Avoid redundant JSDoc for simple functions.
 
 ## Documentation
 
-Use **Context7 MCP** tools to fetch up-to-date documentation for any library (Wagmi, Viem, RainbowKit, DaisyUI, Hardhat, Next.js, etc.). Context7 is configured as an MCP server and provides access to indexed documentation with code examples.
+Use **Context7 MCP** tools to fetch up-to-date documentation for any library (Wagmi, Viem, Privy, DaisyUI, Foundry, Next.js, etc.). Context7 is configured as an MCP server and provides access to indexed documentation with code examples.
 
 ## Skills & Agents Index
 

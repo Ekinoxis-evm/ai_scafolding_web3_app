@@ -1,8 +1,8 @@
-# ethglobanyc — AI-Native Web3 App Template
+# AI-Native Web3 App Template
 
-A **Scaffold-ETH 2** dApp (Next.js + Foundry monorepo) supercharged with an **AI provider lab**: a curated set of MCP servers, subagents, slash commands, and skills that let you build, verify, index, and ship onchain apps with Claude Code — fast and safely.
+A reusable **Scaffold-ETH 2** dApp (Next.js + Foundry monorepo) supercharged with an **AI provider lab**: a curated set of MCP servers, subagents, slash commands, and skills that let you build, verify, index, and ship onchain apps with Claude Code — fast and safely. Wallet/auth is **Privy** with embedded + **gas-sponsored smart wallets**. Working chain: **Ethereum Sepolia**.
 
-> **TL;DR** — `yarn install` → `yarn chain` / `yarn deploy` / `yarn start`. Then build with the agents and `/commands` below. Authorize MCPs with `/mcp`.
+> **TL;DR** — `yarn install` → set your Privy App ID → `yarn deploy --network sepolia` → `yarn start`. Then build with the agents and `/commands` below. Authorize MCPs with `/mcp`.
 
 ```
                        ┌─────────────────────────────────────────────┐
@@ -30,20 +30,30 @@ A **Scaffold-ETH 2** dApp (Next.js + Foundry monorepo) supercharged with an **AI
 
 ## 2 · Install
 ```bash
-git clone <your-repo> && cd ethglobanyc
+git clone <your-repo> && cd <your-repo>
 git submodule update --init --recursive   # Foundry libs (forge-std, OpenZeppelin)
 yarn install                              # uses the bundled yarn 4 — no corepack needed
 ```
 
-## 3 · Run (three terminals)
+## 3 · Run
+
+**Default — Sepolia (Privy sponsorship works here):**
 ```bash
-yarn chain      # 1) local Anvil chain
-yarn deploy     # 2) deploy contracts → ABIs auto-sync to the frontend
-yarn start      # 3) frontend at http://localhost:3000
+yarn deploy --network sepolia   # deploy contracts to Sepolia → ABIs auto-sync to the UI
+yarn start                      # frontend at http://localhost:3000
+```
+Deploying needs a funded deployer on Sepolia — `yarn generate` to create one, fund it from a [Sepolia faucet](https://www.alchemy.com/faucets/ethereum-sepolia), then deploy. End users pay no gas: Privy's smart wallet + your dashboard gas credits sponsor their transactions.
+
+**Optional — local fast iteration** (no Privy sponsorship; smart wallets need a real network):
+```bash
+# temporarily set targetNetworks: [chains.foundry] in packages/nextjs/scaffold.config.ts
+yarn chain      # local Anvil
+yarn deploy     # deploy locally → ABIs hot-reload to the UI
+yarn start
 ```
 Edit a contract → `yarn deploy` again → the UI auto-adapts to the new ABI. That hot loop is SE-2's superpower.
 
-Other useful scripts: `yarn test` (Foundry tests) · `yarn compile` · `yarn account` (manage deploy keystore) · `yarn next:check-types` · `yarn lint`.
+Other useful scripts: `yarn test` (Foundry tests) · `yarn compile` · `yarn account` (deploy keystore) · `yarn next:check-types` · `yarn lint`.
 
 ## 4 · Configure
 
@@ -52,7 +62,7 @@ Other useful scripts: `yarn test` (Foundry tests) · `yarn compile` · `yarn acc
 cp packages/nextjs/.env.example   packages/nextjs/.env.local    # frontend keys
 cp packages/foundry/.env.example  packages/foundry/.env         # deploy/verify keys
 ```
-Minimum to build: **`NEXT_PUBLIC_ALCHEMY_API_KEY`** (RPC — [Alchemy](https://dashboard.alchemy.com)) and, once you swap in Privy, **`NEXT_PUBLIC_PRIVY_APP_ID`**. Every key is documented in `.env.example` (root) — the master reference — and `docs/rpc.md`. SE-2 ships working defaults so you can start with nothing set.
+Minimum to run: **`NEXT_PUBLIC_PRIVY_APP_ID`** (login/wallets — [dashboard.privy.io](https://dashboard.privy.io), **required at runtime**) and **`NEXT_PUBLIC_ALCHEMY_API_KEY`** (RPC — [Alchemy](https://dashboard.alchemy.com)). For Privy sponsorship: enable smart wallets + add **Sepolia** to supported networks + add `http://localhost:3000` to allowed origins, and turn on gas sponsorship credits (see `docs/privy.md`). Every key is documented in `.env.example` (root, master reference) and `docs/rpc.md`.
 
 ### MCP servers (the AI's live tools)
 Restart Claude Code, then run `/mcp`:
@@ -71,13 +81,13 @@ This repo is wired so Claude Code has the right context and tools for each job. 
 | You want to… | Run / ask | What kicks in |
 |--------------|-----------|---------------|
 | Add a smart contract | "add an ERC-721 mint contract" | `solidity-engineer` agent + `openzeppelin`/`erc-721` skills → `ethskills:ship` first |
-| Swap RainbowKit → Privy | `/setup-privy` | `web3-frontend` agent + `privy` skill + `privy-docs` MCP |
+| Customize Privy login / wallets | `/setup-privy` | `web3-frontend` agent + `privy` skill + `privy-docs` MCP |
 | Resolve ENS names/avatars | `/integrate-ens` | context7-grounded ENS docs |
 | Add a price feed / VRF / CCIP | "add a Chainlink ETH/USD feed" | `chainlink-*` skills, live addresses |
 | Index events | "index Transfer events" | `subgraph` / `ponder` skills + Graph MCPs |
 | Add off-chain DB | "add a Postgres table for X" | `integrations-engineer` + `supabase`/`drizzle-neon` |
 | Verify a deployed contract | `/verify-contract` | Foundry + Etherscan V2 (one key, all chains) |
-| Check a tx / address while debugging | "inspect tx 0x… on Base" | `blockscout` MCP |
+| Check a tx / address while debugging | "inspect tx 0x… on Sepolia" | `blockscout` MCP |
 | Pre-flight before deploy | `/ship-check` | full gate: state, decimals, addresses, secrets, tests, audit |
 | Run CI locally before pushing | `/test-ci` | Foundry tests + Next lint/typecheck/build |
 
@@ -107,9 +117,10 @@ This repo is wired so Claude Code has the right context and tools for each job. 
 packages/
   nextjs/                 # Next.js app
     app/  components/  hooks/scaffold-eth/   # SE-2 typed hooks (useScaffoldReadContract…)
-    services/web3/        # wagmi config + connectors (← swap RainbowKit→Privy here)
+    services/web3/        # wagmi + Privy config (PrivyProvider, smart-account connector)
+    components/scaffold-eth/PrivyConnectButton.tsx  # login/wallet UI
     contracts/            # auto-generated deployedContracts.ts (do NOT hand-edit)
-    scaffold.config.ts    # target networks, polling, burner wallet
+    scaffold.config.ts    # targetNetworks (Sepolia), polling, RPC overrides
   foundry/                # Foundry project
     contracts/  script/  test/  lib/(submodules)
     foundry.toml          # tuned: reproducible bytecode + Etherscan V2 multichain verify
