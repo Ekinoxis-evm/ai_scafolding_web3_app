@@ -43,6 +43,8 @@ Three terminals: `yarn chain` (local anvil) · `yarn deploy` (deploy contracts) 
 - **Privy**: `.claude/skills/privy` — auth/wallet/policy implementation sequences. Live docs via `privy-docs` MCP.
 - **Chainlink** (`.claude/skills/chainlink-*` → `.agents/skills/`): `data-feeds`, `data-streams`, `vrf`, `ccip`, `cre`, `ace`, `confidential-ai-attester`.
 - **Scaffold-ETH 2** (`.agents/skills/` → symlinked into `.claude/skills/`): `openzeppelin`, `erc-721`, `siwe`, `eip-5792` (batch tx), `x402` (machine payments), `subgraph`, `ponder` (indexer), `drizzle-neon` (db).
+- **Vercel** (vercel-labs/agent-skills): `deploy-to-vercel`, `vercel-optimize`, `vercel-cli-with-tokens`, `vercel-composition-patterns`, `vercel-react-best-practices`, `vercel-react-view-transitions`, `web-design-guidelines`, `writing-guidelines`. Pair with the `vercel` MCP.
+- **Supabase** (supabase/agent-skills): `supabase`, `supabase-postgres-best-practices`. Pair with the `supabase` MCP.
 - **ethskills** (plugin): `ship`, `security`, `gas`, `l2s`, `standards`, `tools`, `addresses`, `wallets`, `testing`, `audit`, `frontend-ux`, etc.
 - **Uniswap / viem** plugins: `viem-integration`, `swap-integration`, `v4-*` for AMM/hook work.
 - **Supabase / Vercel** plugins: DB, deploy, env management.

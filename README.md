@@ -102,10 +102,14 @@ This repo is wired so Claude Code has the right context and tools for each job. 
 | `integrations-engineer` | Supabase / Railway / Chainlink / indexer wiring. |
 | `grumpy-carlos-code-reviewer` | SE-2's opinionated code reviewer. |
 
-### Skills (`.claude/skills/` — 16 + plugins)
+### Skills (`.claude/skills/` — 27 + plugins)
+Skills give the agent *how-to / best-practices* context; they pair with the live-access MCPs.
 - **Chainlink**: `data-feeds` · `data-streams` · `vrf` · `ccip` · `cre` · `ace` · `confidential-ai-attester`
 - **Scaffold-ETH 2**: `openzeppelin` · `erc-721` · `siwe` · `eip-5792` · `x402` · `subgraph` · `ponder` · `drizzle-neon`
-- **Privy**: `privy` · plus in-session `ethskills:*`, `vercel:*`, `supabase:*`, Uniswap/viem plugins
+- **Privy**: `privy`
+- **Vercel** (vercel-labs): `deploy-to-vercel` · `vercel-optimize` · `vercel-cli-with-tokens` · `vercel-composition-patterns` · `vercel-react-best-practices` · `vercel-react-view-transitions` · `web-design-guidelines` · `writing-guidelines`
+- **Supabase**: `supabase` · `supabase-postgres-best-practices`
+- Plus in-session plugins: `ethskills:*`, Uniswap/viem
 
 ### MCP servers (`.mcp.json` — 9)
 `context7` · `privy-docs` · `supabase` · `railway` · `vercel` · `github` · `blockscout` · `graph-subgraph` · `graph-token-api`

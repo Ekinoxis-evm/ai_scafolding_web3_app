@@ -27,8 +27,12 @@ The full set of tooling wired into this workspace. **Base framework: Scaffold-ET
 | `privy` | `.claude/skills/privy` | `npx skills add https://docs.privy.io` |
 | `chainlink-{data-feeds,data-streams,vrf,ccip,cre,ace,confidential-ai-attester}` | `.claude/skills/chainlink-*` → `.agents/skills/` | `npx skills add smartcontractkit/chainlink-agent-skills` |
 | `openzeppelin, erc-721, siwe, eip-5792, x402, subgraph, ponder, drizzle-neon` | `.claude/skills/*` → `.agents/skills/` | Scaffold-ETH 2 (bundled) |
+| `deploy-to-vercel, vercel-optimize, vercel-cli-with-tokens, vercel-composition-patterns, vercel-react-best-practices, vercel-react-view-transitions, web-design-guidelines, writing-guidelines` | `.claude/skills/*` → `.agents/skills/` | `npx skills add vercel-labs/agent-skills` — pairs with the `vercel` MCP |
+| `supabase, supabase-postgres-best-practices` | `.claude/skills/*` → `.agents/skills/` | `npx skills add supabase/agent-skills` — pairs with the `supabase` MCP |
 | `ethskills:{ship,security,gas,l2s,standards,tools,addresses,wallets,testing,audit,frontend-ux,…}` | plugin (in-session) | ethskills.com |
-| `vercel:*`, `supabase:*`, `uniswap-*`, `viem-integration`, `frontend-design` | plugins (in-session) | bundled |
+| `uniswap-*`, `viem-integration`, `frontend-design` | plugins (in-session) | bundled |
+
+> **Skills vs MCP**: a skill carries *how-to / best-practices* context the agent loads on demand; the MCP gives *live access* to your projects/data. For Vercel and Supabase you now have **both** — e.g. the `supabase` skill knows RLS/migration patterns while the `supabase` MCP reads your actual schema.
 
 ## Agents (`.claude/agents/`)
 
